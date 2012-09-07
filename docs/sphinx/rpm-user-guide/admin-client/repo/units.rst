@@ -698,3 +698,99 @@ Below is the sample output from the ``errata`` command when uploading an erratum
 Orphaned Packages
 -----------------
 
+An orphaned content unit is a content unit that exists in the system but does
+not have any repository associations. All orphaned content unit commands are
+found under the ``orphan`` section of the client.
+
+Listing Packages
+^^^^^^^^^^^^^^^^
+
+The ``list`` command is used to display a list of orphaned content units.
+
+The following arguments are available:
+
+``--type``
+  Restricts the results to one content type such as "rpm", "errata", etc.
+
+``--summary, -s``
+  Includes a report (following the list of units) that shows a count of how many
+  orphaned units exist of each type.
+
+Below is the sample output from the ``orphan list`` command::
+
+ $ pulp-admin orphan list
+ Arch:          noarch
+ Buildhost:     localhost
+ Checksum:      08e5958cff29f550aafd0bd5c49dab6003cd0d3a47d0fbbd87ce74b869f1d073
+ Checksumtype:  sha256
+ Description:   web.py is a web framework for python that is as simple as it is
+                powerful. web.py is in the public domain; you can use it for
+                whatever purpose with absolutely no restrictions.
+ Epoch:         0
+ Filename:      python-webpy-0.32-9.fc17.noarch.rpm
+ Id:            291589f3-8556-4fb0-ad8e-9bba8510f1f6
+ License:       Public Domain and BSD
+ Name:          python-webpy
+ Provides:      [[u'python-webpy', u'EQ', [u'0', u'0.32', u'9.fc17']]]
+ Relativepath:  python-webpy-0.32-9.fc17.noarch.rpm
+ Release:       9.fc17
+ Requires:      [[u'python(abi)', u'EQ', [u'0', u'2.7', None]]]
+ Vendor:
+ Version:       0.32
+
+ $ pulp-admin orphan list --summary
+ Arch:          noarch
+ Buildhost:     localhost
+ Checksum:      08e5958cff29f550aafd0bd5c49dab6003cd0d3a47d0fbbd87ce74b869f1d073
+ Checksumtype:  sha256
+ Description:   web.py is a web framework for python that is as simple as it is
+                powerful. web.py is in the public domain; you can use it for
+                whatever purpose with absolutely no restrictions.
+ Epoch:         0
+ Filename:      python-webpy-0.32-9.fc17.noarch.rpm
+ Id:            291589f3-8556-4fb0-ad8e-9bba8510f1f6
+ License:       Public Domain and BSD
+ Name:          python-webpy
+ Provides:      [[u'python-webpy', u'EQ', [u'0', u'0.32', u'9.fc17']]]
+ Relativepath:  python-webpy-0.32-9.fc17.noarch.rpm
+ Release:       9.fc17
+ Requires:      [[u'python(abi)', u'EQ', [u'0', u'2.7', None]]]
+ Vendor:
+ Version:       0.32
+
+ +----------------------------------------------------------------------+
+                                 Summary
+ +----------------------------------------------------------------------+
+
+ Rpm:    1
+ Total:  1
+
+
+Removing Packages
+^^^^^^^^^^^^^^^^^
+
+The ``remove`` command is used to remove orphaned content units.
+
+This command submits an asynchronous request to the server, and execution
+results can be viewed by running ``pulp-admin tasks list``
+
+The following arguments are available:
+
+``--type``
+  Restricts the operation to one content type such as "rpm", "errata", etc.
+
+``--unit-id``
+  ID of a content unit. If this option is specified, "type" must also be
+  specified. Together, they define one content unit to remove.
+
+``--all``
+  Removes all orphaned content units, ignoring any other options.
+
+
+Below is the sample output from the ``orphan list`` command::
+
+ $ pulp-admin orphan remove --type=rpm
+ Request accepted
+
+ check status of task ee369142-f916-11e1-90b9-1803731e94c4 with "pulp-admin tasks
+ details"
