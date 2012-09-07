@@ -14,6 +14,7 @@
 import os
 import httplib
 import socket
+
 from pulp.common.bundle import Bundle as BundleImpl
 from pulp.common.config import Config
 from pulp.agent.lib.handler import ContentHandler
@@ -245,12 +246,22 @@ class Repository:
         
     @property
     def basic(self):
+        """
+        Get basic mutable properties for I{details}.
+        @return: A dict of basic properties.
+        @rtype: dict
+        """
         return subdict(
             self.details['repository'],
             'display_name', 'description', 'notes')
     
     @property
     def distributors(self):
+        """
+        Get the list of distributors defined in I{details}.
+        @return: A list of distributors.
+        @rtype: list
+        """
         return self.details['distributors']
         
     

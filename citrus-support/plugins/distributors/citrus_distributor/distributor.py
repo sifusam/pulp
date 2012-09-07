@@ -13,6 +13,7 @@
 
 import os
 import hashlib
+
 from pulp.server.compat import json
 from pulp.plugins.distributor import Distributor
 from pulp.server.managers import factory
@@ -20,6 +21,7 @@ from logging import getLogger
 
 
 _LOG = getLogger(__name__)
+
 
 PUBLISH_DIR='/var/lib/pulp/published/http/citrus/repos'
 
@@ -64,7 +66,6 @@ class CitrusDistributor(Distributor):
         @return: report describing the publish run
         @rtype:  pulp.plugins.model.PublishReport
         """
-
         pubdir = config.get('publishdir', PUBLISH_DIR)
         units = conduit.get_units()
         pub = Publisher(repo.id, pubdir)
