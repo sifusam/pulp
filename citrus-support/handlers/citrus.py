@@ -202,7 +202,7 @@ class RepositoryHandler(ContentHandler):
         """
         try:
             upstream = [b['repo_id'] for b in binds]
-            downstream = [r.repo_id for r in Repository.fetch_all()]
+            downstream = [r.repo_id for r in LocalRepository.fetch_all()]
             for repo_id in downstream:
                 if repo_id not in upstream:
                     repo = LocalRepository(repo_id)

@@ -81,7 +81,7 @@ class TestPlugins(PluginTests):
         config = {'key1' : 'value1', 'key2' : None}
         # create repo
         manager = factory.repo_manager()
-        repo = manager.create_repo(self.REPO_ID)
+        manager.create_repo(self.REPO_ID)
         manager = factory.repo_distributor_manager()
         # add distrubutor
         manager.add_distributor(
