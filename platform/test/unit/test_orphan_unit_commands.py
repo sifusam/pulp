@@ -34,30 +34,47 @@ class TestList(base.PulpClientTests):
         self.command = unit.OrphanUnitListCommand(self.context)
 
     def test_option(self):
-        self.assertEqual(len(self.command.options), 1)
+        # options are --type and --summary
+        self.assertEqual(len(self.command.options), 2)
         self.assertEqual('--type', self.command.options[0].name)
 
     @mock.patch('pulp.client.extensions.core.PulpPrompt.render_document')
     @mock.patch('pulp.bindings.content.OrphanContentAPI.orphans')
     def test_all(self, mock_orphans, mock_render):
-        mock_orphans.return_value.response_body = [{'_id': 'foo'}]
+        mock_orphans.return_value.response_body =\
+            [{'_id': 'foo', '_content_type_id': 'rpm'}]
 
         self.command.run()
 
         mock_orphans.assert_called_once_with()
         mock_render.assert_called_once_with(
-            {'_id' : 'foo', 'id' : 'foo'})
+            {'_id' : 'foo', 'id' : 'foo', '_content_type_id': 'rpm'})
 
     @mock.patch('pulp.client.extensions.core.PulpPrompt.render_document')
     @mock.patch('pulp.bindings.content.OrphanContentAPI.orphans_by_type')
     def test_with_type(self, mock_orphans, mock_render):
-        mock_orphans.return_value.response_body = [{'_id': 'foo'}]
+        mock_orphans.return_value.response_body =\
+            [{'_id': 'foo', '_content_type_id': 'rpm'}]
 
         self.command.run(**{'type' : 'foo'})
 
         mock_orphans.assert_called_once_with('foo')
         mock_render.assert_called_once_with(
-                {'_id' : 'foo', 'id' : 'foo'})
+                {'_id' : 'foo', 'id' : 'foo', '_content_type_id': 'rpm'})
+
+    @mock.patch('pulp.client.extensions.core.PulpPrompt.render_document')
+    @mock.patch('pulp.bindings.content.OrphanContentAPI.orphans')
+    def test_summary(self, mock_orphans, mock_render):
+        mock_orphans.return_value.response_body = [
+            {'_id': 'foo1', '_content_type_id': 'rpm'},
+            {'_id': 'foo2', '_content_type_id': 'rpm'},
+            {'_id': 'foo3', '_content_type_id': 'srpm'},
+        ]
+
+        self.command.run(summary=True)
+
+        last_call_arg = mock_render.call_args[0][0]
+        self.assertEqual(last_call_arg, {'rpm':2, 'srpm':1, 'Total':3})
 
 
 class TestRemove(base.PulpClientTests):
