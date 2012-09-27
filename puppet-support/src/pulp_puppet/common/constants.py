@@ -69,6 +69,18 @@ STATE_SKIPPED = 'skipped'
 
 COMPLETE_STATES = (STATE_SUCCESS, STATE_FAILED, STATE_SKIPPED)
 
+# -- consumer payload keys ----------------------------------------------------
+
+# The value will indicate what protocol to use when downloading modules
+PAYLOAD_PROTOCOL = 'protocol'
+
+# Values for the PAYLOAD_PROTOCOL entry
+PROTOCOL_HTTP = 'http'
+PROTOCOL_HTTPS = 'https'
+
+# The value will be the host at which the puppet master can download modules
+PAYLOAD_SERVER = 'host'
+
 # -- importer configuration keys ----------------------------------------------
 
 # Location from which to sync modules
@@ -96,6 +108,12 @@ DEFAULT_SERVE_HTTPS = False
 CONFIG_HTTP_DIR = 'http_dir'
 DEFAULT_HTTP_DIR = '/var/www/pulp_puppet/http/repos'
 
+# Alias all repositories are served from over HTTP
+ALIAS_HTTP = '/pulp/puppet'
+
 # Local directory the web server will serve for HTTPS repositories
 CONFIG_HTTPS_DIR = 'https_dir'
 DEFAULT_HTTPS_DIR = '/var/www/pulp_puppet/https/repos'
+
+# Alias all repositories are served from over HTTPS
+ALIAS_HTTPS = '/pulp/puppet'
