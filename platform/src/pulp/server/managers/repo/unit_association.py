@@ -25,6 +25,7 @@ from pulp.plugins.conduits.unit_import import ImportUnitConduit
 from pulp.plugins.config import PluginCallConfiguration
 from pulp.plugins.loader import api as plugin_api
 import pulp.plugins.types.database as types_db
+from pulp.server import config as pulp_config
 from pulp.server.db.model.criteria import UnitAssociationCriteria
 from pulp.server.db.model.repository import RepoContentUnit
 import pulp.server.managers.factory as manager_factory
@@ -259,7 +260,7 @@ class RepoUnitAssociationManager(object):
         # Invoke the importer
         importer_instance, plugin_config = plugin_api.get_importer_by_id(dest_repo_importer['importer_type_id'])
 
-        call_config = PluginCallConfiguration(plugin_config, dest_repo_importer['config'], import_config_override)
+        call_config = PluginCallConfiguration(pulp_config.config, plugin_config, dest_repo_importer['config'], import_config_override)
         login = manager_factory.principal_manager().get_principal()['login']
         conduit = ImportUnitConduit(source_repo_id, dest_repo_id, source_repo_importer['id'], dest_repo_importer['id'], RepoContentUnit.OWNER_TYPE_USER, login)
 
@@ -469,7 +470,7 @@ def remove_from_importer(repo_id, removed_units):
 
     # Retrieve the plugin instance to invoke
     importer_instance, plugin_config = plugin_api.get_importer_by_id(repo_importer['importer_type_id'])
-    call_config = PluginCallConfiguration(plugin_config, repo_importer['config'])
+    call_config = PluginCallConfiguration(pulp_config.config, plugin_config, repo_importer['config'])
 
     # Invoke the importer's remove method
     try:

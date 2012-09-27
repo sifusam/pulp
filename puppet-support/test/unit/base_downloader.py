@@ -15,6 +15,7 @@
 Utilities for testing downloader implementations.
 """
 
+from ConfigParser import SafeConfigParser
 import mock
 import os
 import shutil
@@ -32,7 +33,7 @@ class BaseDownloaderTests(unittest.TestCase):
         self.working_dir = tempfile.mkdtemp(prefix='downloader-tests')
         self.repo = Repository('test-repo', working_dir=self.working_dir)
 
-        self.config = PluginCallConfiguration({}, {})
+        self.config = PluginCallConfiguration(SafeConfigParser, {}, {})
 
         self.mock_cancelled_callback = mock.MagicMock().is_cancelled
         self.mock_cancelled_callback.return_value = False

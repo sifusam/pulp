@@ -11,6 +11,7 @@
 # have received a copy of GPLv2 along with this software; if not, see
 # http://www.gnu.org/licenses/old-licenses/gpl-2.0.txt.
 
+from ConfigParser import SafeConfigParser
 import mock
 import os
 import shutil
@@ -70,6 +71,7 @@ class PublishRunTests(unittest.TestCase):
         # Configuration for the run
         self.repo = Repository('test-repo', working_dir=self.working_dir)
         self.config = PluginCallConfiguration(
+            SafeConfigParser(),
             {
                 constants.CONFIG_HTTP_DIR : self.test_http_dir,
                 constants.CONFIG_HTTPS_DIR : self.test_https_dir,

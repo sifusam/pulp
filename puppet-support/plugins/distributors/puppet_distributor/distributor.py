@@ -16,7 +16,7 @@ from gettext import gettext as _
 from pulp.plugins.distributor import Distributor
 
 from pulp_puppet.common import constants
-from pulp_puppet.distributor import configuration, publish
+from pulp_puppet.distributor import configuration, consumer, publish
 
 # -- plugins ------------------------------------------------------------------
 
@@ -40,6 +40,10 @@ class PuppetModuleDistributor(Distributor):
     def distributor_removed(self, repo, config):
         config.default_config = configuration.DEFAULT_CONFIG
         publish.unpublish_repo(repo, config)
+
+    def create_consumer_payload(self, repo, config):
+        payload = consumer.create_consumer_payload(repo, config)
+        return payload
 
     def publish_repo(self, repo, publish_conduit, config):
         self.publish_cancelled = False

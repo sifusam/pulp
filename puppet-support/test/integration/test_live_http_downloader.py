@@ -35,7 +35,7 @@ class LiveHttpDownloaderTests(unittest.TestCase):
         repo_config = {
             constants.CONFIG_FEED : TEST_SOURCE,
         }
-        self.config = PluginCallConfiguration({}, repo_config)
+        self.config = PluginCallConfiguration(None, {}, repo_config)
 
         self.mock_cancelled_callback = mock.MagicMock().is_cancelled
         self.mock_cancelled_callback.return_value = False

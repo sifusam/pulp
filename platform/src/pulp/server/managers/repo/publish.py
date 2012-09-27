@@ -30,6 +30,7 @@ from pulp.plugins.loader import exceptions as plugin_exceptions
 from pulp.plugins.model import PublishReport
 from pulp.plugins.conduits.repo_publish import RepoPublishConduit
 from pulp.plugins.config import PluginCallConfiguration
+from pulp.server import config as pulp_config
 from pulp.server.db.model.repository import Repo, RepoDistributor, RepoPublishResult
 from pulp.server.dispatch import constants as dispatch_constants
 import pulp.server.managers.repo._common as common_utils
@@ -117,7 +118,7 @@ class RepoPublishManager(object):
         # Assemble the data needed for the publish
         conduit = RepoPublishConduit(repo_id, distributor_id)
 
-        call_config = PluginCallConfiguration(distributor_config, repo_distributor['config'], publish_config_override)
+        call_config = PluginCallConfiguration(pulp_config.config, distributor_config, repo_distributor['config'], publish_config_override)
         transfer_repo = common_utils.to_transfer_repo(repo)
         transfer_repo.working_dir = common_utils.distributor_working_dir(repo_distributor['distributor_type_id'], repo_id, mkdir=True)
 

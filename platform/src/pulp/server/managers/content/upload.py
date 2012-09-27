@@ -216,7 +216,7 @@ class ContentUploadManager(object):
         # Assemble the data needed for the import
         conduit = UploadConduit(repo_id, repo_importer['id'], RepoContentUnit.OWNER_TYPE_USER, manager_factory.principal_manager().get_principal()['login'])
 
-        call_config = PluginCallConfiguration(plugin_config, repo_importer['config'], None)
+        call_config = PluginCallConfiguration(pulp_config.config, plugin_config, repo_importer['config'], None)
         transfer_repo = repo_common_utils.to_transfer_repo(repo)
         transfer_repo.working_dir = repo_common_utils.importer_working_dir(repo_importer['importer_type_id'], repo_id, mkdir=True)
 

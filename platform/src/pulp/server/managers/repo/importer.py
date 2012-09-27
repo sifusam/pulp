@@ -17,6 +17,7 @@ import sys
 from pulp.server.db.model.repository import Repo, RepoImporter
 from pulp.plugins.loader import api as plugin_api
 from pulp.plugins.config import PluginCallConfiguration
+from pulp.server import config as pulp_config
 import pulp.server.managers.factory as manager_factory
 import pulp.server.managers.repo._common as common_utils
 from pulp.server.exceptions import MissingResource, InvalidValue, PulpExecutionException, PulpDataException
@@ -123,7 +124,7 @@ class RepoImporterManager(object):
             clean_config = None
 
         # Let the importer plugin verify the configuration
-        call_config = PluginCallConfiguration(plugin_config, clean_config)
+        call_config = PluginCallConfiguration(pulp_config.config, plugin_config, clean_config)
         transfer_repo = common_utils.to_transfer_repo(repo)
         transfer_repo.working_dir = common_utils.importer_working_dir(importer_type_id, repo_id)
 
@@ -202,7 +203,7 @@ class RepoImporterManager(object):
         importer_type_id = repo_importer['importer_type_id']
         importer_instance, plugin_config = plugin_api.get_importer_by_id(importer_type_id)
 
-        call_config = PluginCallConfiguration(plugin_config, repo_importer['config'])
+        call_config = PluginCallConfiguration(pulp_config.config, plugin_config, repo_importer['config'])
 
         transfer_repo = common_utils.to_transfer_repo(repo)
         transfer_repo.working_dir = common_utils.importer_working_dir(importer_type_id, repo_id)
@@ -263,7 +264,7 @@ class RepoImporterManager(object):
         merged_config.update(importer_config)
 
         # Let the importer plugin verify the configuration
-        call_config = PluginCallConfiguration(plugin_config, merged_config)
+        call_config = PluginCallConfiguration(pulp_config.config, plugin_config, merged_config)
         transfer_repo = common_utils.to_transfer_repo(repo)
         transfer_repo.working_dir = common_utils.importer_working_dir(importer_type_id, repo_id)
 

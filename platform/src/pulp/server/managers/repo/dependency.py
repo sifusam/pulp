@@ -19,6 +19,7 @@ from   pulp.plugins.config import PluginCallConfiguration
 from pulp.plugins.loader import api as plugin_api
 from pulp.plugins.loader import exceptions as plugin_exceptions
 import pulp.plugins.types.database as types_db
+from pulp.server import config as pulp_config
 from   pulp.server.exceptions import MissingResource, PulpExecutionException
 import pulp.server.managers.factory as manager_factory
 import pulp.server.managers.repo._common as common_utils
@@ -88,7 +89,7 @@ class DependencyManager(object):
             raise MissingResource(repo_id), None, sys.exc_info()[2]
 
         # Package for the importer call
-        call_config = PluginCallConfiguration(plugin_config, repo_importer['config'], options)
+        call_config = PluginCallConfiguration(pulp_config.config, plugin_config, repo_importer['config'], options)
         transfer_repo = common_utils.to_transfer_repo(repo)
         transfer_repo.working_dir = common_utils.importer_working_dir(repo_importer['importer_type_id'], repo_id, mkdir=True)
 

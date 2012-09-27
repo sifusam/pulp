@@ -11,6 +11,7 @@
 # have received a copy of GPLv2 along with this software; if not, see
 # http://www.gnu.org/licenses/old-licenses/gpl-2.0.txt.
 
+from ConfigParser import SafeConfigParser
 import mock
 import os
 import shutil
@@ -62,7 +63,7 @@ class PuppetModuleSyncRunTests(unittest.TestCase):
         self.working_dir = tempfile.mkdtemp(prefix='puppet-sync-tests')
         self.repo = Repository('test-repo', working_dir=self.working_dir)
         self.conduit = MockConduit()
-        self.config = PluginCallConfiguration({}, {
+        self.config = PluginCallConfiguration(SafeConfigParser(), {}, {
             constants.CONFIG_FEED : FEED,
         })
         self.is_cancelled_call = mock.MagicMock().is_cancelled_call

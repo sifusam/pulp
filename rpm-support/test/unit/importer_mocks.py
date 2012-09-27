@@ -11,8 +11,9 @@
 # have received a copy of GPLv2 along with this software; if not, see
 # http://www.gnu.org/licenses/old-licenses/gpl-2.0.txt.
 
-import os
+from ConfigParser import SafeConfigParser
 import mock
+import os
 from pulp.plugins.conduits.repo_sync import RepoSyncConduit
 from pulp.plugins.conduits.upload import UploadConduit
 from pulp.plugins.conduits.unit_import import ImportUnitConduit
@@ -127,6 +128,7 @@ def get_basic_config(*arg, **kwargs):
     repo_plugin_config = {}
     for key in kwargs:
         repo_plugin_config[key] = kwargs[key]
-    config = PluginCallConfiguration(plugin_config, 
-            repo_plugin_config=repo_plugin_config)
+    config = PluginCallConfiguration(SafeConfigParser(),
+                                     plugin_config,
+                                     repo_plugin_config)
     return config

@@ -22,6 +22,7 @@ from pulp.plugins.loader import exceptions as plugin_exceptions
 from pulp.plugins.conduits.repo_publish import RepoGroupPublishConduit
 from pulp.plugins.config import PluginCallConfiguration
 from pulp.plugins.model import PublishReport
+from pulp.server import config as pulp_config
 from pulp.server.db.model.repo_group import RepoGroupPublishResult, RepoGroupDistributor
 from pulp.server.dispatch import constants as dispatch_constants
 from pulp.server.exceptions import MissingResource, PulpExecutionException
@@ -111,7 +112,7 @@ class RepoGroupPublishManager(object):
         # Assemble the data needed for publish
         conduit = RepoGroupPublishConduit(group_id, distributor_id)
 
-        call_config = PluginCallConfiguration(plugin_config, distributor['config'], publish_config_override)
+        call_config = PluginCallConfiguration(pulp_config.config, plugin_config, distributor['config'], publish_config_override)
         transfer_group = common_utils.to_transfer_repo_group(group)
         transfer_group.working_dir = common_utils.group_distributor_working_dir(distributor_type_id, group_id)
 

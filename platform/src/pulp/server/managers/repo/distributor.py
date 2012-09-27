@@ -19,6 +19,7 @@ import uuid
 from pulp.server.db.model.repository import Repo, RepoDistributor
 from pulp.plugins.loader import api as plugin_api
 from pulp.plugins.config import PluginCallConfiguration
+from pulp.server import config as pulp_config
 from pulp.server.exceptions import MissingResource, InvalidValue, PulpExecutionException, PulpDataException
 from pulp.server.managers import factory as manager_factory
 import pulp.server.managers.repo._common as common_utils
@@ -159,7 +160,7 @@ class RepoDistributorManager(object):
             clean_config = None
 
         # Let the distributor plugin verify the configuration
-        call_config = PluginCallConfiguration(plugin_config, clean_config)
+        call_config = PluginCallConfiguration(pulp_config.config, plugin_config, clean_config)
         transfer_repo = common_utils.to_transfer_repo(repo)
         transfer_repo.working_dir = common_utils.distributor_working_dir(distributor_type_id, repo_id)
 
@@ -237,7 +238,7 @@ class RepoDistributorManager(object):
         distributor_type_id = repo_distributor['distributor_type_id']
         distributor_instance, plugin_config = plugin_api.get_distributor_by_id(distributor_type_id)
 
-        call_config = PluginCallConfiguration(plugin_config, repo_distributor['config'])
+        call_config = PluginCallConfiguration(pulp_config.config, plugin_config, repo_distributor['config'])
 
         transfer_repo = common_utils.to_transfer_repo(repo)
         transfer_repo.working_dir = common_utils.distributor_working_dir(distributor_type_id, repo_id)
@@ -306,7 +307,7 @@ class RepoDistributorManager(object):
         merged_config.update(distributor_config)
 
         # Let the distributor plugin verify the configuration
-        call_config = PluginCallConfiguration(plugin_config, merged_config)
+        call_config = PluginCallConfiguration(pulp_config.config, plugin_config, merged_config)
         transfer_repo = common_utils.to_transfer_repo(repo)
         transfer_repo.working_dir = common_utils.distributor_working_dir(distributor_type_id, repo_id)
 
@@ -371,7 +372,7 @@ class RepoDistributorManager(object):
         distributor_instance, plugin_config = plugin_api.get_distributor_by_id(distributor_type_id)
 
         # Let the distributor plugin verify the configuration
-        call_config = PluginCallConfiguration(plugin_config, repo_distributor['config'])
+        call_config = PluginCallConfiguration(pulp_config.config, plugin_config, repo_distributor['config'])
         transfer_repo = common_utils.to_transfer_repo(repo)
         transfer_repo.working_dir = common_utils.distributor_working_dir(distributor_type_id, repo_id)
 

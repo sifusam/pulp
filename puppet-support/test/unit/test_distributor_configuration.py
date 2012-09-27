@@ -11,6 +11,7 @@
 # have received a copy of GPLv2 along with this software; if not, see
 # http://www.gnu.org/licenses/old-licenses/gpl-2.0.txt.
 
+from ConfigParser import SafeConfigParser
 import mock
 import unittest
 
@@ -24,7 +25,7 @@ class HttpTests(unittest.TestCase):
 
     def test_validate_serve_http(self):
         # Test
-        config = PluginCallConfiguration({constants.CONFIG_SERVE_HTTP : 'true'}, {})
+        config = PluginCallConfiguration(SafeConfigParser(), {constants.CONFIG_SERVE_HTTP : 'true'}, {})
         result, msg = configuration._validate_http(config)
 
         # Verify
@@ -33,7 +34,7 @@ class HttpTests(unittest.TestCase):
 
     def test_validate_serve_http_invalid(self):
         # Test
-        config = PluginCallConfiguration({constants.CONFIG_SERVE_HTTP : 'foo'}, {})
+        config = PluginCallConfiguration(SafeConfigParser(), {constants.CONFIG_SERVE_HTTP : 'foo'}, {})
         result, msg = configuration._validate_http(config)
 
         # Verify
@@ -46,7 +47,7 @@ class HttpsTests(unittest.TestCase):
 
     def test_validate_serve_https(self):
         # Test
-        config = PluginCallConfiguration({constants.CONFIG_SERVE_HTTPS : 'true'}, {})
+        config = PluginCallConfiguration(SafeConfigParser(), {constants.CONFIG_SERVE_HTTPS : 'true'}, {})
         result, msg = configuration._validate_https(config)
 
         # Verify
@@ -55,7 +56,7 @@ class HttpsTests(unittest.TestCase):
 
     def test_validate_serve_https_invalid(self):
         # Test
-        config = PluginCallConfiguration({constants.CONFIG_SERVE_HTTPS : 'foo'}, {})
+        config = PluginCallConfiguration(SafeConfigParser(), {constants.CONFIG_SERVE_HTTPS : 'foo'}, {})
         result, msg = configuration._validate_https(config)
 
         # Verify
@@ -76,7 +77,7 @@ class FullValidationTests(unittest.TestCase):
             x.return_value = True, None
 
         # Test
-        c = PluginCallConfiguration({}, {})
+        c = PluginCallConfiguration(SafeConfigParser(), {}, {})
         result, msg = configuration.validate(c)
 
         # Verify
@@ -97,7 +98,7 @@ class FullValidationTests(unittest.TestCase):
         all_mock_calls[0].return_value = False, 'foo'
 
         # Test
-        c = PluginCallConfiguration({}, {})
+        c = PluginCallConfiguration(SafeConfigParser(), {}, {})
         result, msg = configuration.validate(c)
 
         # Verify

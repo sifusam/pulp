@@ -35,6 +35,8 @@ different configuration types as well as accessing an individual configuration
 area.
 """
 
+import copy
+
 class PluginCallConfiguration:
     """
     Provides APIs for retrieving values used to drive how a plugin should
@@ -46,7 +48,8 @@ class PluginCallConfiguration:
     persist between invocations on the plugin.
     """
 
-    def __init__(self, plugin_config, repo_plugin_config, override_config=None):
+    def __init__(self, server_config, plugin_config, repo_plugin_config, override_config=None):
+        self.server_config = copy.copy(server_config)
         self.plugin_config = plugin_config or {}
         self.repo_plugin_config = repo_plugin_config or {}
         self.override_config = override_config or {}
@@ -126,6 +129,16 @@ class PluginCallConfiguration:
             elif str == 'false':
                 return False
         return None
+
+    def get_server_config(self):
+        """
+        Returns a copy of the server configuration. Unlike the other plugin
+        configurations, the server configuration is in INI format.
+
+        :return: copy of the server configuration
+        :rtype:  ConfigParser
+        """
+        return self.server_config
 
     def _all_configs(self):
         """

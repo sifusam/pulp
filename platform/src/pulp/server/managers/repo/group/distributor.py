@@ -18,6 +18,7 @@ import uuid
 
 from pulp.plugins.loader import api as plugin_api
 from pulp.plugins.config import PluginCallConfiguration
+from pulp.server import config as pulp_config
 from pulp.server.db.model.repo_group import RepoGroup, RepoGroupDistributor
 from pulp.server.exceptions import InvalidValue, MissingResource, PulpDataException, PulpExecutionException
 from pulp.server.managers import factory as manager_factory
@@ -148,7 +149,7 @@ class RepoGroupDistributorManager(object):
             clean_config = dict([(k, v) for k, v in group_plugin_config.items() if v is not None])
 
         # Let the plugin validate the configuration
-        call_config = PluginCallConfiguration(plugin_config, clean_config)
+        call_config = PluginCallConfiguration(pulp_config.config, plugin_config, clean_config)
         transfer_group = common_utils.to_transfer_repo_group(group)
         transfer_group.working_dir = common_utils.distributor_working_dir(distributor_type_id, repo_group_id)
 
@@ -212,7 +213,7 @@ class RepoGroupDistributorManager(object):
         distributor_type_id = distributor['distributor_type_id']
         distributor_instance, plugin_config = plugin_api.get_group_distributor_by_id(distributor_type_id)
 
-        call_config = PluginCallConfiguration(plugin_config, distributor['config'])
+        call_config = PluginCallConfiguration(pulp_config.config, plugin_config, distributor['config'])
         transfer_group = common_utils.to_transfer_repo_group(group)
         transfer_group.working_dir = common_utils.distributor_working_dir(distributor_type_id, repo_group_id)
 
@@ -263,7 +264,7 @@ class RepoGroupDistributorManager(object):
         merged_config = process_update_config(distributor['config'], distributor_config)
 
         # Request the distributor validate the new configuration
-        call_config = PluginCallConfiguration(plugin_config, merged_config)
+        call_config = PluginCallConfiguration(pulp_config.config, plugin_config, merged_config)
         transfer_group = common_utils.to_transfer_repo_group(group)
         transfer_group.working_dir = common_utils.group_distributor_working_dir(distributor_type_id, repo_group_id)
         transfer_related_groups = related_groups(distributor_type_id, omit_group_id=repo_group_id)

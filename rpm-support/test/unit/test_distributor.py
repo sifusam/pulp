@@ -12,6 +12,7 @@
 # have received a copy of GPLv2 along with this software; if not, see
 # http://www.gnu.org/licenses/old-licenses/gpl-2.0.txt.
 
+from ConfigParser import SafeConfigParser
 import mock
 import os
 import shutil
@@ -390,49 +391,49 @@ class TestDistributor(rpm_support_base.PulpRPMTests):
         self.assertEqual(existing_urls, {})
 
         url_a = "/abc/de/fg/"
-        config_a = PluginCallConfiguration({"relative_url":url_a}, {})
+        config_a = PluginCallConfiguration(SafeConfigParser(), {"relative_url":url_a}, {})
         repo_a = RelatedRepository("repo_a_id", [config_a])
 
         conflict_url_a = "/abc/de/"
-        conflict_config_a = PluginCallConfiguration({"relative_url":conflict_url_a}, {})
+        conflict_config_a = PluginCallConfiguration(SafeConfigParser(), {"relative_url":conflict_url_a}, {})
         conflict_repo_a = RelatedRepository("conflict_repo_id_a", [conflict_config_a])
 
         url_b = "/abc/de/kj/"
-        config_b = PluginCallConfiguration({"relative_url":url_b}, {})
+        config_b = PluginCallConfiguration(SafeConfigParser(), {"relative_url":url_b}, {})
         repo_b = RelatedRepository("repo_b_id", [config_b])
         repo_b_dup = RelatedRepository("repo_b_dup_id", [config_b])
 
         url_c = "/abc/jk/fg/gfgf/gfgf/gfre/"
-        config_c = PluginCallConfiguration({"relative_url":url_c}, {})
+        config_c = PluginCallConfiguration(SafeConfigParser(), {"relative_url":url_c}, {})
         repo_c = RelatedRepository("repo_c_id", [config_c])
 
         url_d = "simple"
-        config_d = PluginCallConfiguration({"relative_url":url_d}, {})
+        config_d = PluginCallConfiguration(SafeConfigParser(), {"relative_url":url_d}, {})
         repo_d = RelatedRepository("repo_d_id", [config_d])
 
         url_e = ""
-        config_e = PluginCallConfiguration({"relative_url":url_e}, {})
+        config_e = PluginCallConfiguration(SafeConfigParser(), {"relative_url":url_e}, {})
         repo_e = RelatedRepository("repo_e_id", [config_e])
 
         url_f = "/foo"
-        config_f = PluginCallConfiguration({"relative_url":url_f}, {})
+        config_f = PluginCallConfiguration(SafeConfigParser(), {"relative_url":url_f}, {})
         repo_f = RelatedRepository("repo_f_id", [config_f])
 
         conflict_url_f = "foo/"
-        conflict_config_f = PluginCallConfiguration({"relative_url":conflict_url_f}, {})
+        conflict_config_f = PluginCallConfiguration(SafeConfigParser(), {"relative_url":conflict_url_f}, {})
         conflict_repo_f = RelatedRepository("conflict_repo_f_id", [conflict_config_f])
 
         url_g = "bar/"
-        config_g = PluginCallConfiguration({"relative_url":url_g}, {})
+        config_g = PluginCallConfiguration(SafeConfigParser(), {"relative_url":url_g}, {})
         repo_g = RelatedRepository("repo_g_id", [config_g])
 
         # Try with url set to None
         url_h = None
-        config_h = PluginCallConfiguration({"relative_url":url_h}, {})
+        config_h = PluginCallConfiguration(SafeConfigParser(), {"relative_url":url_h}, {})
         repo_h = RelatedRepository("repo_h_id", [config_h])
 
         # Try with relative_url not existing
-        config_i = PluginCallConfiguration({}, {})
+        config_i = PluginCallConfiguration(SafeConfigParser(), {}, {})
         repo_i = RelatedRepository("repo_i_id", [config_i])
 
         existing_urls = distributor.form_rel_url_lookup_table([repo_a, repo_d, repo_e, repo_f, repo_g, repo_h])
@@ -486,7 +487,7 @@ class TestDistributor(rpm_support_base.PulpRPMTests):
                 relative_url=relative_url, http=False, https=True)
 
         url_a = relative_url
-        config_a = PluginCallConfiguration({"relative_url":url_a}, {})
+        config_a = PluginCallConfiguration(SafeConfigParser(), {"relative_url":url_a}, {})
         repo_a = RelatedRepository("repo_a_id", [config_a])
 
         # Simple check of direct conflict of a duplicate
@@ -500,7 +501,7 @@ class TestDistributor(rpm_support_base.PulpRPMTests):
 
         # Check conflict with a subdir
         url_b = "rel_a/rel_b/"
-        config_b = PluginCallConfiguration({"relative_url":url_b}, {})
+        config_b = PluginCallConfiguration(SafeConfigParser(), {"relative_url":url_b}, {})
         repo_b = RelatedRepository("repo_b_id", [config_b])
         related_repos = [repo_b]
         distributor = YumDistributor()
@@ -512,19 +513,19 @@ class TestDistributor(rpm_support_base.PulpRPMTests):
 
         # Check no conflict with a pieces of a common subdir
         url_c = "rel_a/rel_b/rel_c"
-        config_c = PluginCallConfiguration({"relative_url":url_c}, {})
+        config_c = PluginCallConfiguration(SafeConfigParser(), {"relative_url":url_c}, {})
         repo_c = RelatedRepository("repo_c_id", [config_c])
 
         url_d = "rel_a/rel_b/rel_d"
-        config_d = PluginCallConfiguration({"relative_url":url_d}, {})
+        config_d = PluginCallConfiguration(SafeConfigParser(), {"relative_url":url_d}, {})
         repo_d = RelatedRepository("repo_d_id", [config_d])
 
         url_e = "rel_a/rel_b/rel_e/rel_e"
-        config_e = PluginCallConfiguration({"relative_url":url_e}, {})
+        config_e = PluginCallConfiguration(SafeConfigParser(), {"relative_url":url_e}, {})
         repo_e = RelatedRepository("repo_e_id", [config_e])
 
         # Add a repo with no relative_url
-        config_f = PluginCallConfiguration({"relative_url":None}, {})
+        config_f = PluginCallConfiguration(SafeConfigParser(), {"relative_url":None}, {})
         repo_f = RelatedRepository("repo_f_id", [config_f])
 
         related_repos = [repo_c, repo_d, repo_e, repo_f]
@@ -536,10 +537,10 @@ class TestDistributor(rpm_support_base.PulpRPMTests):
         self.assertEqual(msg, None)
 
         # Test with 2 repos and no relative_url
-        config_h = PluginCallConfiguration({}, {})
+        config_h = PluginCallConfiguration(SafeConfigParser(), {}, {})
         repo_h = RelatedRepository("repo_h_id", [config_h])
 
-        config_i = PluginCallConfiguration({}, {})
+        config_i = PluginCallConfiguration(SafeConfigParser(), {}, {})
         repo_i = RelatedRepository("repo_i_id", [config_i])
 
         status, msg = distributor.validate_config(repo_i, config, [repo_h])
@@ -556,7 +557,7 @@ class TestDistributor(rpm_support_base.PulpRPMTests):
         test_repos = []
         for index in range(0,10000):
             test_url = "rel_a/rel_b/rel_e/repo_%s" % (index)
-            test_config = PluginCallConfiguration({"relative_url":test_url}, {})
+            test_config = PluginCallConfiguration(SafeConfigParser(), {"relative_url":test_url}, {})
             r = RelatedRepository("repo_%s_id" % (index), [test_config])
             test_repos.append(r)
         related_repos = test_repos

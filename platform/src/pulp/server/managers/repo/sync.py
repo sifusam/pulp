@@ -129,7 +129,9 @@ class RepoSyncManager(object):
         # Assemble the data needed for the sync
         conduit = RepoSyncConduit(repo_id, repo_importer['id'], RepoContentUnit.OWNER_TYPE_IMPORTER, repo_importer['id'])
 
-        call_config = PluginCallConfiguration(importer_config, repo_importer['config'], sync_config_override)
+        call_config = PluginCallConfiguration(pulp_config.config, importer_config,
+                                              repo_importer['config'],
+                                              override_config=sync_config_override)
         transfer_repo = common_utils.to_transfer_repo(repo)
         transfer_repo.working_dir = common_utils.importer_working_dir(repo_importer['importer_type_id'], repo_id, mkdir=True)
 
