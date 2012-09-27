@@ -1,6 +1,4 @@
-# -*- coding: utf-8 -*-
-#
-# Copyright © 2012 Red Hat, Inc.
+# Copyright (c) 2012 Red Hat, Inc.
 #
 # This software is licensed to you under the GNU General Public
 # License as published by the Free Software Foundation; either version
@@ -11,9 +9,8 @@
 # have received a copy of GPLv2 along with this software; if not, see
 # http://www.gnu.org/licenses/old-licenses/gpl-2.0.txt.
 
-# The handler framework will look to this module to instantiate the
-# classes referenced in the .conf file, but rather than define thin
-# delegate classes, simply import them here so they are accessible.
+from pulp.agent.lib.handler import ContentHandler
 
-from pulp_puppet.handler.bindings import PuppetMasterBindingsHandler
-from pulp_puppet.handler.content import PuppetMasterContentHandler
+
+class PuppetMasterContentHandler(ContentHandler):
+    pass
