@@ -108,12 +108,14 @@ DEFAULT_SERVE_HTTPS = False
 CONFIG_HTTP_DIR = 'http_dir'
 DEFAULT_HTTP_DIR = '/var/www/pulp_puppet/http/repos'
 
-# Alias all repositories are served from over HTTP
-ALIAS_HTTP = '/pulp/puppet'
-
 # Local directory the web server will serve for HTTPS repositories
 CONFIG_HTTPS_DIR = 'https_dir'
 DEFAULT_HTTPS_DIR = '/var/www/pulp_puppet/https/repos'
 
-# Alias all repositories are served from over HTTPS
-ALIAS_HTTPS = '/pulp/puppet'
+# Alias all repositories are served from
+WEB_ALIAS = '/pulp/puppet'
+
+# -- handler configuration keys -----------------------------------------------
+
+# Location on the puppet master consumer to store repository definitions
+CONFIG_CONSUMER_REPO_DIR = 'repo_dir'
