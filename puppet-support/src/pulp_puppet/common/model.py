@@ -139,6 +139,12 @@ class Module(object):
         self.dependencies = None # list of dicts of name to version_requirement
         self.checksums = None # dict of file name (with relative path) to checksum
 
+    def __eq__(self, other):
+        my_key = self.unit_key()
+        other_key = other.unit_key()
+
+        return my_key == other_key
+
     def to_dict(self):
         """
         Returns a dict view on the module in the same format as was parsed from

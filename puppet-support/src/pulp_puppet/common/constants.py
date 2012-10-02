@@ -119,3 +119,6 @@ WEB_ALIAS = '/pulp/puppet'
 
 # Location on the puppet master consumer to store repository definitions
 CONFIG_CONSUMER_REPO_DIR = 'repo_dir'
+
+# Location on the puppet master to install modules to
+CONFIG_PUPPET_MASTER_DIR = 'puppet_master_dir'

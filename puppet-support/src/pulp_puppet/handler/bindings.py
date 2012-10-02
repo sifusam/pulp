@@ -10,12 +10,12 @@
 # http://www.gnu.org/licenses/old-licenses/gpl-2.0.txt.
 
 import os
-import urlparse
 
 from pulp.agent.lib.handler import BindHandler
 from pulp.agent.lib.report import BindReport, CleanReport
 
 from pulp_puppet.common import constants
+from pulp_puppet.handler.model import BoundRepositoryFile
 
 
 class PuppetMasterBindingsHandler(BindHandler):
@@ -40,14 +40,17 @@ class PuppetMasterBindingsHandler(BindHandler):
             repository = definition['repository']
             repo_id = repository['id']
 
-            self._write_repository_file(repo_id, details)
+            bound_repo = BoundRepositoryFile(self.cfg, repo_id)
+            bound_repo.update_from_binding(details)
+            bound_repo.save()
 
         report = BindReport()
         report.succeeded()
         return report
 
     def unbind(self, conduit, repo_id):
-        self._delete_repository_file(repo_id)
+        bound_repo = BoundRepositoryFile(self.cfg, repo_id)
+        bound_repo.delete()
 
         report = BindReport()
         report.succeeded()
@@ -61,41 +64,3 @@ class PuppetMasterBindingsHandler(BindHandler):
         report = BindReport()
         report.succeeded()
         return report
-
-    # -- private --------------------------------------------------------------
-
-    def _write_repository_file(self, repo_id, details):
-        # If there's already a definition, replace it
-        filename = self._repository_file_path(repo_id)
-        self._delete_repository_file(repo_id)
-
-        # Collect data to write
-        protocol = details[constants.PAYLOAD_PROTOCOL]
-        host = details[constants.PAYLOAD_SERVER]
-
-        repo_url = self._assemble_repo_url(protocol, host, repo_id)
-
-        # Write out a repo definition
-        f = open(filename, 'w')
-        f.write(repo_url)
-        f.write('\n')
-        f.close()
-
-    def _delete_repository_file(self, repo_id):
-        # Determine full file path
-        filename = self._repository_file_path(repo_id)
-
-        if os.path.exists(filename):
-            os.remove(filename)
-
-    def _assemble_repo_url(self, protocol, host, repo_id):
-        url = '/'.join([constants.WEB_ALIAS, repo_id])
-
-        # scheme, netloc, url, params, query, fragment
-        data = (protocol, host, url, None, None, None)
-        repo_url = urlparse.urlunparse(data)
-        return repo_url
-
-    def _repository_file_path(self, repo_id):
-        filename = os.path.join(self.repo_dir, repo_id)
-        return filename

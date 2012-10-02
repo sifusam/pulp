@@ -9,8 +9,29 @@
 # have received a copy of GPLv2 along with this software; if not, see
 # http://www.gnu.org/licenses/old-licenses/gpl-2.0.txt.
 
+"""
+Handles
+"""
+
 from pulp.agent.lib.handler import ContentHandler
+
+from pulp_puppet.handler.content.report import PuppetModuleOperationReport
 
 
 class PuppetMasterContentHandler(ContentHandler):
-    pass
+
+    def install(self, conduit, units, options):
+        report = PuppetModuleOperationReport(conduit)
+
+
+        return report
+
+    def uninstall(self, conduit, units, options):
+        report = PuppetModuleOperationReport(conduit)
+
+        return report
+
+    def update(self, conduit, units, options):
+        report = PuppetModuleOperationReport(conduit)
+
+        return report
