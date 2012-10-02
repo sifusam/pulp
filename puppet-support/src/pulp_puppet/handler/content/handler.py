@@ -10,12 +10,13 @@
 # http://www.gnu.org/licenses/old-licenses/gpl-2.0.txt.
 
 """
-Handles
+Handles all content related requests for a puppet master.
 """
 
 from pulp.agent.lib.handler import ContentHandler
 
 from pulp_puppet.handler.content.report import PuppetModuleOperationReport
+from pulp_puppet.handler.content import install
 
 
 class PuppetMasterContentHandler(ContentHandler):
@@ -23,6 +24,8 @@ class PuppetMasterContentHandler(ContentHandler):
     def install(self, conduit, units, options):
         report = PuppetModuleOperationReport(conduit)
 
+        installer = install.PuppetModuleInstaller(self.cfg, report, conduit)
+        installer.install_modules(units, options)
 
         return report
 

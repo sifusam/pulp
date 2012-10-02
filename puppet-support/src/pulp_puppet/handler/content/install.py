@@ -17,11 +17,15 @@ the description of how to specify those options will be found here.
 """
 
 from httplib import HTTPConnection, HTTPSConnection
+import logging
 import os
+import shutil
+import tarfile
 import tempfile
 import pycurl
+import urlparse
 
-from pulp.common.json_compat import json
+from pulp.common.util import encode_unicode
 
 from pulp_puppet.common import constants
 from pulp_puppet.common.download import StoredDownloadedContent
@@ -29,64 +33,25 @@ from pulp_puppet.common.model import Module, RepositoryMetadata
 from pulp_puppet.handler.model import BoundRepositoryFile
 
 
-class ModuleInstallRequest(object):
-    """
-    Contains the details of a single module that needs to be installed.
-    """
-
-    @classmethod
-    def from_module(cls, module):
-        """
-        :param module: the standard domain representation of a module
-        :type  module: pulp_puppet.common.model.Module
-        """
-        return cls(module.name, module.version, module.author)
-
-    def __init__(self, name, version, author):
-        self.name = name
-        self.version = version
-        self.author = author
-        self.download_url = None
-
-
-class BoundRepository(object):
-    """
-    Contains a list of modules in a single bound repository and the base URL
-    at which modules are donwloaded from it.
-    """
-
-    def __init__(self, repo_id, repo_url, modules):
-        self.repo_id = repo_id
-        self.repo_url = repo_url
-        self.modules = modules
-
-    def module_url(self, unit_key):
-        """
-        Calculates the full URL to the given unit in this repository.
-
-        :param unit_key:
-        :return:
-        """
-        module = Module(unit_key)
-        relative_url = constants.HOSTED_MODULE_FILE_RELATIVE_PATH % (module.author[0], module.author)
-
-        full_url = '/'.join([self.repo_url, relative_url, module.filename()])
-        return full_url
+LOG = logging.getLogger(__name__)
 
 
 class PuppetModuleInstaller(object):
 
-    def __init__(self, config, report):
+    def __init__(self, config, report, conduit):
         """
         :param config: configuration for the handler as loaded by the framework
         :type  config: dict
         :param report: report instance to track the installation
         :type  report: pulp_puppet.handler.content.report.PuppetModuleOperationReport
+        :param conduit: callback into the handler framework for progress reporting
+        :type  conduit: pulp.agent.lib.conduit.Conduit
         """
         super(PuppetModuleInstaller, self).__init__()
 
         self.config = config
         self.report = report
+        self.conduit = conduit
 
     def install_modules(self, units, options):
         """
@@ -122,22 +87,24 @@ class PuppetModuleInstaller(object):
             bound_repos.append(r)
 
         # Resolve which repository a unit comes from
-        modules = [ModuleInstallRequest.from_module(Module.from_dict(u)) for u in units]
-        unfound_modules = []
+        module_install_requests = [ModuleInstallRequest.from_module(Module.from_dict(u)) for u in units]
+        unfound_module_requests = []
 
-        for module in modules:
+        for request in module_install_requests:
             for bound_repo in bound_repos:
-                if module in bound_repo.modules:
-                    module.download_url = bound_repo.repo_url
+                if request.module in bound_repo.modules:
+                    request.download_url = bound_repo.calculate_module_url(request.module)
                     break
             else:
-                unfound_modules.append(module)
+                unfound_module_requests.append(request)
 
         # TODO: Handle the case where an install was requested for an unfound module
 
         # Download or ensure each file is downloaded into the expected location
-        for module in modules:
-            self._ensure_downloaded(module)
+        for request in module_install_requests:
+            self._ensure_downloaded(request)
+
+    # -- repository metadata retrieval ----------------------------------------
 
     def _load_bound_repo_files(self):
         repo_dir = self.config[constants.CONFIG_CONSUMER_REPO_DIR]
@@ -168,21 +135,29 @@ class PuppetModuleInstaller(object):
         else:
             connection = HTTPSConnection(bound_repository_file.host)
 
-        connection.request('GET', bound_repository_file.repo_url, headers=headers)
+        # Generate the relative URL to the metadata file
+        relative_url = '/'.join([bound_repository_file.repo_relative_url, constants.REPO_METADATA_FILENAME])
+
+        LOG.info('Retrieving metadata file at <%s>' % relative_url)
+
+        connection.request('GET', relative_url, headers=headers)
 
         response = connection.getresponse()
         response_body = response.read()
-        response_json = json.loads(response_body)
 
         # Use the common domain objects to parse the metadata JSON file
         repository_metadata = RepositoryMetadata()
-        repository_metadata.update_from_json(response_json)
+        repository_metadata.update_from_json(response_body)
 
         br = BoundRepository(bound_repository_file.repo_id,
-                             bound_repository_file.repo_url,
+                             bound_repository_file.protocol,
+                             bound_repository_file.host,
+                             bound_repository_file.repo_relative_url,
                              repository_metadata.modules)
 
         return br
+
+    # -- module installation --------------------------------------------------
 
     def _ensure_downloaded(self, module_install_request):
         """
@@ -190,8 +165,7 @@ class PuppetModuleInstaller(object):
         :type  module_install_request: ModuleInstallRequest
         """
 
-        deploy_dir = os.path.join(self.config[constants.CONFIG_PUPPET_MASTER_DIR],
-                                      module_install_request.name)
+        deploy_dir = self._module_deploy_dir(module_install_request)
 
         # Check to see if the module already exists.
         #
@@ -207,7 +181,7 @@ class PuppetModuleInstaller(object):
             return
 
         tmp_file = self._download_module(module_install_request)
-        self._install_module(tmp_file)
+        self._install_module(module_install_request, tmp_file)
 
     def _download_module(self, module_install_request):
         """
@@ -215,7 +189,10 @@ class PuppetModuleInstaller(object):
         :type  module_install_request: ModuleInstallRequest
         """
 
+        url = encode_unicode(module_install_request.download_url)
         tmp_file = tempfile.mktemp(prefix='pulp-puppet-install-')
+
+        LOG.info('Downloading module at <%s>' % url)
 
         curl = pycurl.Curl()
         content = StoredDownloadedContent(tmp_file)
@@ -225,9 +202,9 @@ class PuppetModuleInstaller(object):
             curl.setopt(pycurl.LOW_SPEED_LIMIT, 1000)
             curl.setopt(pycurl.LOW_SPEED_TIME, 5 * 60)
             curl.setopt(pycurl.WRITEFUNCTION, content.update)
-            curl.setopt(pycurl.URL, module_install_request.download_url)
-            curl.perform()
+            curl.setopt(pycurl.URL, url)
 
+            curl.perform()
             status = curl.getinfo(curl.HTTP_CODE)
 
             # TODO: Add in status checking to see if it downloaded correctly
@@ -235,6 +212,8 @@ class PuppetModuleInstaller(object):
             curl.close()
             content.close()
         except Exception, e:
+            LOG.exception('Exception downloading module from <%s>' % url)
+
             curl.close()
             content.close()
             content.delete()
@@ -242,5 +221,100 @@ class PuppetModuleInstaller(object):
 
         return tmp_file
 
-    def _install_module(self, tmp_file):
-        pass
+    def _install_module(self, module_install_request, tmp_file):
+
+        LOG.info('Installing module from tarball <%s>' % tmp_file)
+
+        # Extract everything to a temp directory first (we'll need to analyze
+        # what comes out of the tarball.
+
+        tmp_deploy_dir = tempfile.mkdtemp(prefix='pulp-puppet-install-')
+
+        tarball = tarfile.open(tmp_file)
+        tarball.extractall(path=tmp_deploy_dir)
+
+        # Most modules seem to have a level of nesting in the module such that
+        # everything is extracted to a directory first. That directory is not
+        # named the same as puppet master wants, so we can't just extract the
+        # tarball directoy to the puppet master dir. Look in the temp dir and
+        # if there's only a single directory in there, only copy its contents
+        # to the actual deploy directory. If there are multiple files, assume
+        # the puppet module was packaged incorrectly and everything represents
+        # the module contents and copy it all.
+
+        copy_src_dir = tmp_deploy_dir
+        if len(os.listdir(tmp_deploy_dir)) == 1:
+            copy_src_dir = os.path.join(tmp_deploy_dir, os.listdir(tmp_deploy_dir)[0])
+
+        deploy_dir = self._module_deploy_dir(module_install_request)
+        shutil.copytree(copy_src_dir, deploy_dir)
+
+        shutil.rmtree(tmp_deploy_dir)
+        os.remove(tmp_file)
+
+    def _module_deploy_dir(self, module_install_request):
+        deploy_dir = os.path.join(self.config[constants.CONFIG_PUPPET_MASTER_DIR],
+                                  module_install_request.name)
+        return deploy_dir
+
+
+class ModuleInstallRequest(object):
+    """
+    Contains the details of a single module that needs to be installed.
+    """
+
+    @classmethod
+    def from_module(cls, module):
+        """
+        :param module: the standard domain representation of a module
+        :type  module: pulp_puppet.common.model.Module
+        """
+        return cls(module)
+
+    def __init__(self, module):
+        self.module = module
+        self.download_url = None
+
+    @property
+    def name(self):
+        return self.module.name
+
+    @property
+    def version(self):
+        return self.module.version
+
+    @property
+    def author(self):
+        return self.module.author
+
+
+class BoundRepository(object):
+    """
+    Contains a list of modules in a single bound repository and the base URL
+    at which modules are downloaded from it.
+    """
+
+    def __init__(self, repo_id, protocol, host, repo_relative_url, modules):
+
+        self.repo_id = repo_id
+        self.protocol = protocol
+        self.host = host
+        self.repo_relative_url = repo_relative_url
+        self.modules = modules
+
+    def __str__(self):
+        return 'Repo ID <%s> Relative URL <%s>' % (self.repo_id, self.repo_relative_url)
+
+    def calculate_module_url(self, module):
+        """
+        Calculates the full URL to the given unit in this repository.
+
+        :return:
+        """
+        module_relative_url = constants.HOSTED_MODULE_FILE_RELATIVE_PATH % (module.author[0], module.author)
+        relative_url = '/'.join([self.repo_relative_url, module_relative_url, module.filename()])
+
+        data = (self.protocol, self.host, relative_url, None, None)
+        full_url = urlparse.urlunsplit(data)
+
+        return full_url
