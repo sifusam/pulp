@@ -11,9 +11,11 @@
 # have received a copy of GPLv2 along with this software; if not, see
 # http://www.gnu.org/licenses/old-licenses/gpl-2.0.txt.
 
+import os
+
 from gettext import gettext as _
 
-from pulp.client.extensions.extensions import PulpCliSection, PulpCliCommand
+from pulp.client.extensions.extensions import PulpCliSection, PulpCliCommand, PulpCliOption
 from pulp.bindings.exceptions import RequestException
 
 def initialize(context):
@@ -27,6 +29,11 @@ class ServerPluginsSection(PulpCliSection):
         self.add_command(PulpCliCommand('types', 'lists content types installed on the server', self.types))
         self.add_command(PulpCliCommand('importers', 'lists importers installed on the server', self.importers))
         self.add_command(PulpCliCommand('distributors', 'lists distributors installed on the server', self.distributors))
+        
+        debug_command = PulpCliCommand('debug-report', 'generates a detailed pulp debug report', self.debug_report)
+        debug_command.add_option(PulpCliOption('--dir', 'location on the filesystem where generated debug information tree should be placed; defaults to /tmp', required=False))
+        debug_command.add_option(PulpCliOption('--name', 'name to be used for the base debug directory; defaults to pulp-debug-(current_time in format: %Y-%m-%d-T%H-%M-%S)', required=False))
+        self.add_command(debug_command)
 
         # Disabled until we update the server-side API
         # self.add_command(PulpCliCommand('ping', 'tests server availability', self.ping))
@@ -57,3 +64,11 @@ class ServerPluginsSection(PulpCliSection):
             self.context.prompt.render_failure_message('Pulp server is offline')
             self.context.prompt.render_spacer()
             self.context.prompt.write(e.error_message)
+
+    def debug_report(self, **kwargs):
+        command = "python /var/lib/pulp/scripts/pulp-debug.py"
+        if 'dir' in kwargs:
+            command = command + " --dir=%s" % kwargs['dir']
+        if 'name' in kwargs:
+            command = command + " --name=%s" % kwargs['name']
+        os.system(command)
