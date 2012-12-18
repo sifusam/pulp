@@ -29,7 +29,7 @@ from pulp.common.tags import action_tag, resource_tag
 from pulp.server import config as pulp_config
 from pulp.server.auth.authorization import CREATE, READ, DELETE, EXECUTE, UPDATE
 from pulp.server.db.model.criteria import UnitAssociationCriteria
-from pulp.server.db.model.repository import RepoContentUnit
+from pulp.server.db.model.repository import RepoContentUnit, Repo
 from pulp.server.dispatch import constants as dispatch_constants
 from pulp.server.dispatch import factory as dispatch_factory
 from pulp.server.dispatch.call import CallRequest
@@ -122,7 +122,10 @@ class RepoCollection(JSONController):
 
         for repo in repos:
             repo.update(serialization.link.search_safe_link_obj(repo['id']))
-
+            # Remove internally used scratchpad from repo details
+            if 'scratchpad' in repo:
+                del repo['scratchpad']
+ 
         return repos
 
     @auth_required(READ)
@@ -134,8 +137,7 @@ class RepoCollection(JSONController):
         'distributors'.
         """
         query_params = web.input()
-        query_manager = manager_factory.repo_query_manager()
-        all_repos = query_manager.find_all()
+        all_repos = list(Repo.get_collection().find(projection = {'scratchpad' : 0}))
 
         if query_params.get('details', False):
             query_params['importers'] = True
@@ -169,16 +171,23 @@ class RepoCollection(JSONController):
         # Creation
         repo_manager = manager_factory.repo_manager()
         resources = {dispatch_constants.RESOURCE_REPOSITORY_TYPE: {id: dispatch_constants.RESOURCE_CREATE_OPERATION}}
-        args = [id, display_name, description, notes, importer_type_id, importer_repo_plugin_config, distributors]
+        args = [id, display_name, description, notes]
+        kwargs = {'importer_type_id': importer_type_id,
+                  'importer_repo_plugin_config': importer_repo_plugin_config,
+                  'distributor_list': distributors}
         weight = pulp_config.config.getint('tasks', 'create_weight')
         tags = [resource_tag(dispatch_constants.RESOURCE_REPOSITORY_TYPE, id),
                 action_tag('create')]
 
         call_request = CallRequest(repo_manager.create_and_configure_repo,
                                    args,
+                                   kwargs,
                                    resources=resources,
                                    weight=weight,
-                                   tags=tags)
+                                   tags=tags,
+                                   kwarg_blacklist=['importer_repo_plugin_config',
+                                                    'distributor_list'])
+
         repo = execution.execute_sync(call_request)
         repo.update(serialization.link.child_link_obj(id))
         return self.created(id, repo)
@@ -324,10 +333,12 @@ class RepoImporters(JSONController):
                 action_tag('add_importer')]
 
         call_request = CallRequest(importer_manager.set_importer,
-                                   [repo_id, importer_type, importer_config],
+                                   [repo_id, importer_type],
+                                   {'repo_plugin_config': importer_config},
                                    resources=resources,
                                    weight=weight,
-                                   tags=tags)
+                                   tags=tags,
+                                   kwarg_blacklist=['repo_plugin_config'])
         return execution.execute_sync_created(self, call_request, 'importer')
 
 
@@ -384,10 +395,12 @@ class RepoImporter(JSONController):
                 resource_tag(dispatch_constants.RESOURCE_REPOSITORY_IMPORTER_TYPE, importer_id),
                 action_tag('update_importer')]
         call_request = CallRequest(importer_manager.update_importer_config,
-                                   [repo_id, importer_config],
+                                   [repo_id],
+                                   {'importer_config': importer_config},
                                    resources=resources,
                                    tags=tags,
-                                   archive=True)
+                                   archive=True,
+                                   kwarg_blacklist=['importer_config'])
         result = execution.execute(call_request)
         return self.ok(result)
 
@@ -561,10 +574,13 @@ class RepoDistributors(JSONController):
             resources.update({dispatch_constants.RESOURCE_REPOSITORY_DISTRIBUTOR_TYPE: {distributor_id: dispatch_constants.RESOURCE_CREATE_OPERATION}})
             tags.append(resource_tag(dispatch_constants.RESOURCE_REPOSITORY_DISTRIBUTOR_TYPE, distributor_id))
         call_request = CallRequest(distributor_manager.add_distributor,
-                                   [repo_id, distributor_type, distributor_config, auto_publish, distributor_id],
+                                   [repo_id, distributor_type],
+                                   {'repo_plugin_config': distributor_config, 'auto_publish': auto_publish,
+                                    'distributor_id': distributor_id},
                                    resources=resources,
                                    weight=weight,
-                                   tags=tags)
+                                   tags=tags,
+                                   kwarg_blacklist=['repo_plugin_config'])
         return execution.execute_created(self, call_request, distributor_id)
 
 
