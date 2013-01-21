@@ -13,7 +13,7 @@ import os
 import shutil
 import glob
 from base_file_upgrade import BaseFileUpgradeTests
-from pulp.server.upgrade.filesystem import rpms, distribution
+from pulp.server.upgrade.filesystem import rpms, distribution, repos
 from pulp.server.upgrade.model import UpgradeStepReport
 
 DATA_DIR = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'data')
@@ -27,6 +27,7 @@ class TestFileSystemUpgrade(BaseFileUpgradeTests):
         v2_var_dir = V2_TEST_FILESYSTEM + '/var'
         if os.path.exists(v2_var_dir):
             shutil.rmtree(v2_var_dir)
+
 
     def test_rpms(self):
         report = UpgradeStepReport()
@@ -60,6 +61,18 @@ class TestFileSystemUpgrade(BaseFileUpgradeTests):
 
         self.assertEquals(len(report.errors), 0)
         self.assertTrue(report.succeeded)
+
+    def test_repos(self):
+        report = UpgradeStepReport()
+        repos.DISTRIBUTOR_REPO_WORKING_DIR = "%s/%s" % (V2_TEST_FILESYSTEM, repos.DISTRIBUTOR_REPO_WORKING_DIR)
+        repos.DIR_RPMS = "%s/%s" % (V2_TEST_FILESYSTEM, repos.DIR_RPMS)
+        repos.DIR_SRPMS = "%s/%s" % (V2_TEST_FILESYSTEM, repos.DIR_SRPMS)
+        repos.DIR_DRPM = "%s/%s" % (V2_TEST_FILESYSTEM, repos.DIR_DRPM)
+        status = repos._repos(self.v2_test_db.database, report)
+        self.assertTrue(status)
+        self.assertEquals(len(report.errors), 0)
+        self.assertTrue(report.succeeded)
+
 
 class DRPMUpgradeTests(BaseFileUpgradeTests):
 

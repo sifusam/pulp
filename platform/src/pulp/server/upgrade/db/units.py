@@ -36,7 +36,7 @@ import os
 import datetime
 from pymongo import ASCENDING, DESCENDING
 from pymongo.errors import DuplicateKeyError
-from pymongo.objectid import ObjectId
+from pulp.server.compat import ObjectId
 import yum
 
 from pulp.common import dateutils
