@@ -11,10 +11,7 @@
 # http://www.gnu.org/licenses/old-licenses/gpl-2.0.txt.
 
 import os
-import shutil
-import yum
 from pulp.server.upgrade.model import UpgradeStepReport
-from pulp.server.upgrade.utils import PrestoParser
 
 DIR_STORAGE_ROOT = '/var/lib/pulp/content/'
 DIR_RPMS = os.path.join(DIR_STORAGE_ROOT, 'rpm')
