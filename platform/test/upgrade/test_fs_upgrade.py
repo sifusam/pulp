@@ -25,8 +25,8 @@ class TestFileSystemUpgrade(BaseFileUpgradeTests):
 
     def tearDown(self):
         v2_var_dir = V2_TEST_FILESYSTEM + '/var'
-        if os.path.exists(v2_var_dir):
-            shutil.rmtree(v2_var_dir)
+#        if os.path.exists(v2_var_dir):
+#            shutil.rmtree(v2_var_dir)
 
 
     def test_rpms(self):
@@ -62,12 +62,13 @@ class TestFileSystemUpgrade(BaseFileUpgradeTests):
         self.assertEquals(len(report.errors), 0)
         self.assertTrue(report.succeeded)
 
-    def test_repos(self):
+    def test_zrepos(self):
         report = UpgradeStepReport()
         repos.DISTRIBUTOR_REPO_WORKING_DIR = "%s/%s" % (V2_TEST_FILESYSTEM, repos.DISTRIBUTOR_REPO_WORKING_DIR)
         repos.DIR_RPMS = "%s/%s" % (V2_TEST_FILESYSTEM, repos.DIR_RPMS)
         repos.DIR_SRPMS = "%s/%s" % (V2_TEST_FILESYSTEM, repos.DIR_SRPMS)
         repos.DIR_DRPM = "%s/%s" % (V2_TEST_FILESYSTEM, repos.DIR_DRPM)
+        repos.DIR_DISTRO = "%s/%s" % (V2_TEST_FILESYSTEM, repos.DIR_DISTRO)
         status = repos._repos(self.v2_test_db.database, report)
         self.assertTrue(status)
         self.assertEquals(len(report.errors), 0)
