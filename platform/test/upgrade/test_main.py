@@ -46,7 +46,8 @@ class MainTests(unittest.TestCase):
 
         self.mock_upgrade_calls = [(self.mock_upgrade_call_1, 'Mock 1')]
 
-        self.upgrader = main.Upgrader(prod_db_name=V1_DB_NAME,
+        self.upgrader = main.Upgrader(stream_file=STREAM_FILENAME,
+                                      prod_db_name=V1_DB_NAME,
                                       tmp_db_name=TMP_DB_NAME,
                                       db_upgrade_calls=self.mock_upgrade_calls)
 
@@ -72,6 +73,8 @@ class MainTests(unittest.TestCase):
         self.assertTrue(V1_DB_NAME in connection.database_names())
         self.assertTrue(not TMP_DB_NAME in connection.database_names())
 
+        self.assertTrue(os.path.exists(STREAM_FILENAME))
+
     def test_main_with_error(self):
         # Setup
         self.mock_upgrade_call_1.return_value.failed()
@@ -85,7 +88,6 @@ class MainTests(unittest.TestCase):
 
         # Verify
         self.assertEqual(1, self.mock_upgrade_call_1.call_count)
-
 
     def test_main_with_partial_error(self):
         # Setup
@@ -127,3 +129,37 @@ class MainTests(unittest.TestCase):
 
         # Verify
         self.assertEqual(0, self.mock_upgrade_call_1.call_count)
+
+    @mock.patch('pulp.server.upgrade.main.Upgrader._upgrade_database')
+    @mock.patch('pulp.server.upgrade.main.Upgrader._upgrade_files')
+    def test_no_db_upgrade(self, mock_files_call, mock_db_call):
+        # Setup
+        self.upgrader = main.Upgrader(stream_file=STREAM_FILENAME,
+                                      prod_db_name=V1_DB_NAME,
+                                      tmp_db_name=TMP_DB_NAME,
+                                      db_upgrade_calls=self.mock_upgrade_calls,
+                                      upgrade_db=False)
+
+        # Test
+        self.upgrader.upgrade()
+
+        # Verify
+        self.assertEqual(1, mock_files_call.call_count)
+        self.assertEqual(0, mock_db_call.call_count)
+
+    @mock.patch('pulp.server.upgrade.main.Upgrader._upgrade_database')
+    @mock.patch('pulp.server.upgrade.main.Upgrader._upgrade_files')
+    def test_no_files_upgrade(self, mock_files_call, mock_db_call):
+        # Setup
+        self.upgrader = main.Upgrader(stream_file=STREAM_FILENAME,
+                                      prod_db_name=V1_DB_NAME,
+                                      tmp_db_name=TMP_DB_NAME,
+                                      db_upgrade_calls=self.mock_upgrade_calls,
+                                      upgrade_files=False)
+
+        # Test
+        self.upgrader.upgrade()
+
+        # Verify
+        self.assertEqual(0, mock_files_call.call_count)
+        self.assertEqual(1, mock_db_call.call_count)
